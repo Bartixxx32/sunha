@@ -53,7 +53,7 @@ blueprint:
         time: {}
 trigger:
   - platform: time_pattern
-    seconds: '/60'
+    seconds: "/60"
 condition: []
 action:
   - service: cover.set_cover_position
@@ -61,17 +61,5 @@ action:
       entity_id: !input cover_entity
     data:
       position: >
-        {% set az = state_attr(!input.sun_entity, 'azimuth') | float %}
-        {% set start = !input.start_azimuth | float %}
-        {% set min_a = !input.min_azimuth | float %}
-        {% set max_a = !input.max_azimuth | float %}
-        {% if az < start %}
-          {{ 100 | string }}
-        {% elif az >= start and az <= min_a %}
-          {{ (100 - ((az - start) / (min_a - start) * 50)) | round(0) | string }}
-        {% elif az > min_a and az < max_a %}
-          {{ (50 + ((az - min_a) / (max_a - min_a) * 50)) | round(0) | string }}
-        {% else %}
-          {{ 100 | string }}
-        {% endif %}
+        "{{ (100 if (state_attr(!input.sun_entity, 'azimuth')|float < !input.start_azimuth|float) else (100 - ((state_attr(!input.sun_entity, 'azimuth')|float - !input.start_azimuth|float)/(!input.min_azimuth|float - !input.start_azimuth|float)*50) if state_attr(!input.sun_entity, 'azimuth')|float <= !input.min_azimuth|float else (50 + ((state_attr(!input.sun_entity, 'azimuth')|float - !input.min_azimuth|float)/(!input.max_azimuth|float - !input.min_azimuth|float)*50) if state_attr(!input.sun_entity, 'azimuth')|float < !input.max_azimuth|float else 100))) | round(0) | int }}"
 mode: single
