@@ -1,0 +1,78 @@
+blueprint:
+  name: Sterowanie roletami wg azymutu słońca (konfigurowalne)
+  description: >
+    Automatyczne sterowanie roletami według azymutu słońca. Przy wschodzie rolety są w 100% otwarte,
+    potem stopniowo zamykają się do 50%, a następnie otwierają do 100% przy większym azymucie.
+  domain: automation
+  input:
+    cover_entity:
+      name: Encja rolet
+      description: Wybierz encję sterującą roletami.
+      selector:
+        entity:
+          domain: cover
+    sun_entity:
+      name: Encja słońca
+      description: Wybierz encję słońca.
+      default: sun.sun
+      selector:
+        entity:
+          domain: sun
+    start_azimuth:
+      name: Azymut wschodu (start)
+      description: Azymut, przy którym rolety będą ustawione na 100%.
+      default: 90
+      selector:
+        number:
+          min: 0
+          max: 360
+          unit_of_measurement: "°"
+    min_azimuth:
+      name: Azymut minimalny
+      description: Azymut, przy którym rolety osiągają 50%.
+      default: 110
+      selector:
+        number:
+          min: 0
+          max: 360
+          unit_of_measurement: "°"
+    max_azimuth:
+      name: Azymut maksymalny
+      description: Azymut, przy którym rolety wracają do 100%.
+      default: 180
+      selector:
+        number:
+          min: 0
+          max: 360
+          unit_of_measurement: "°"
+    update_interval:
+      name: Interwał aktualizacji
+      description: Co ile czasu (w formacie HH:MM:SS) automatyzacja będzie sprawdzać azymut.
+      default: "00:01:00"
+      selector:
+        time: {}
+trigger:
+  - platform: time_pattern
+    # Wyzwalacz ustawiony na okres odpowiadający interwałowi aktualizacji.
+    seconds: '/60'
+condition: []
+action:
+  - service: cover.set_cover_position
+    target:
+      entity_id: !input cover_entity
+    data:
+      position: >
+        {% set az = state_attr(!input.sun_entity, 'azimuth') | float %}
+        {% set start = !input.start_azimuth | float %}
+        {% set min_a = !input.min_azimuth | float %}
+        {% set max_a = !input.max_azimuth | float %}
+        {% if az < start %}
+          100
+        {% elif az >= start and az <= min_a %}
+          {{ 100 - ((az - start) / (min_a - start) * 50) | round(0) }}
+        {% elif az > min_a and az < max_a %}
+          {{ 50 + ((az - min_a) / (max_a - min_a) * 50) | round(0) }}
+        {% else %}
+          100
+        {% endif %}
+mode: single
