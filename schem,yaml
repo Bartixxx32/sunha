@@ -53,7 +53,6 @@ blueprint:
         time: {}
 trigger:
   - platform: time_pattern
-    # Wyzwalacz ustawiony na okres odpowiadający interwałowi aktualizacji.
     seconds: '/60'
 condition: []
 action:
@@ -67,12 +66,12 @@ action:
         {% set min_a = !input.min_azimuth | float %}
         {% set max_a = !input.max_azimuth | float %}
         {% if az < start %}
-          100
+          {{ 100 | string }}
         {% elif az >= start and az <= min_a %}
-          {{ 100 - ((az - start) / (min_a - start) * 50) | round(0) }}
+          {{ (100 - ((az - start) / (min_a - start) * 50)) | round(0) | string }}
         {% elif az > min_a and az < max_a %}
-          {{ 50 + ((az - min_a) / (max_a - min_a) * 50) | round(0) }}
+          {{ (50 + ((az - min_a) / (max_a - min_a) * 50)) | round(0) | string }}
         {% else %}
-          100
+          {{ 100 | string }}
         {% endif %}
 mode: single
